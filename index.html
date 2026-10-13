@@ -21,7 +21,7 @@ button:disabled{opacity:.5;cursor:not-allowed}</style></head><body><main><h1>新
 <div class="input"><label for="g10c">10% GS（g/mL）</label><input id="g10c" type="number" step="0.01" value="0.1"></div>
 <div class="input"><label for="g50c">50% GS（g/mL）</label><input id="g50c" type="number" step="0.01" value="0.5"></div>
 <div class="input"><label for="gkcal">葡萄糖热值（kcal/g）</label><input id="gkcal" type="number" step="0.1" value="3.4"></div>
-<div class="input"><label for="fkcal">脂肪乳热值（kcal/mL）</label><input id="fkcal" type="number" step="0.1" value="2"></div>
+<div class="input"><label for="fkcal">脂肪乳热值（kcal/g脂肪）</label><input id="fkcal" type="number" step="0.1" value="10"></div>
 <div class="input"><label for="akcal">氨基酸热值（kcal/g）</label><input id="akcal" type="number" step="0.1" value="4"></div>
 <div class="input"><label for="nac">10% NaCl 钠浓度（mmol/mL）</label><input id="nac" type="number" step="0.001" value="1.711"></div>
 <div class="input"><label for="kc">15% KCl 钾浓度（mmol/mL）</label><input id="kc" type="number" step="0.001" value="2.012"></div>
@@ -30,7 +30,7 @@ button:disabled{opacity:.5;cursor:not-allowed}</style></head><body><main><h1>新
 <div class="input"><label for="pna">甘油磷酸钠：钠（mmol/mL）</label><input id="pna" type="number" step="0.01" value="2"></div>
 <div class="input"><label for="reserve">备用配液时间（h）</label><select id="reserve"><option value="24">24小时</option><option value="26" selected>26小时</option></select></div>
 <div class="input"><label for="access">TPN输注通路</label><select id="access"><option value="central" selected>中心静脉</option><option value="peripheral">外周静脉</option></select></div>
-</div><p class="help">钙浓度0.22 mmol/mL仅为原表近似值，必须以本院制剂说明书确认。甘油磷酸钠按每mL含1 mmol磷、2 mmol钠暂设。其他添加液量由使用者确认，不自动推导渗透压或混合稳定性。</p></details></div>
+</div><p class="help">脂肪乳热值按每克脂肪计；默认10 kcal/g由原设置2 kcal/mL÷0.2 g/mL换算，请按实际制剂核对。钙浓度0.22 mmol/mL仅为原表近似值，必须以本院制剂说明书确认。甘油磷酸钠按每mL含1 mmol磷、2 mmol钠暂设。其他添加液量由使用者确认，不自动推导渗透压或混合稳定性。</p></details></div>
 <div class="card"><div class="top"><h2 class="header-green">② 绿色区域｜医嘱录入量</h2><span class="pill">自动计算</span></div><ul id="issues" class="tips-list"></ul><div class="grid"><div class="green"><small>24小时TPN液量</small><b id="vol">—</b><small>mL</small></div><div class="green"><small>泵速（统一输注）</small><b id="rate">—</b><small>mL/h</small></div><div class="green"><small>备用配液总体积</small><b id="bvol">—</b><small>mL</small></div></div><h2 style="margin-top:16px">各组分（24小时 / 备用配液）</h2><div id="rx"></div><button id="copyrx" class="action">复制绿色区域医嘱明细</button></div>
 <div class="card"><h2 class="header-amber">③ 提示与备注｜逐项查看并手工录入</h2><div class="remark"><ul class="remark-list" id="remark"></ul></div><p class="help">所有营养指标以实际24小时输注量计。备用配液仅用于增加预留体积；额外配液不会被重复计入患儿24小时热卡和电解质摄入。</p></div>
 </section>
@@ -60,7 +60,7 @@ let assigned=[['6.74% 小儿复方氨基酸',aaV,'mL'],['20% 中/长链脂肪乳
 if(feasible){el('vol').textContent=fx(v);el('rate').textContent=fx(rate);el('bvol').textContent=fx(v*factor);el('rx').innerHTML=assigned.map(z=>line(z[0],fx(z[1]),fx(z[1]*factor),z[2])).join('');}else{el('vol').textContent=fx(v);el('rate').textContent=fx(rate);el('bvol').textContent=fx(v*factor);el('rx').innerHTML=notice('目标无法配平，暂不生成可用于医嘱的配液组分量。',true)}
 let glucose=feasible?(g10*g10c+g50*g50c):glucoseG, sugarPct=100*glucose/v, deliveredGIR=glucose*1000/(w*1440);
 let aaG=aaV*aac,fatG=fatV*fatc,nMass=aaV*nit/1000,nDay=nMass/w;
-let kcalGlucose=glucose*gkcal,kcalFat=fatV*fkcal,kcalAA=aaG*akcal,nonProt=(kcalGlucose+kcalFat)/w, totalKcal=(kcalGlucose+kcalFat+kcalAA)/w, ratio=nMass>0?(kcalGlucose+kcalFat)/nMass:NaN;
+let kcalGlucose=glucose*gkcal,kcalFat=fatG*fkcal,kcalAA=aaG*akcal,nonProt=(kcalGlucose+kcalFat)/w, totalKcal=(kcalGlucose+kcalFat+kcalAA)/w, ratio=nMass>0?(kcalGlucose+kcalFat)/nMass:NaN;
 let sugarFat=kcalFat>0?kcalGlucose/kcalFat:NaN;let proteinRatio=kcalGlucose+kcalFat>0?totalKcal:NaN;
 let aaPct=100*aaG/v, osm='未测定（不作通路合格判断）';
 if(el('access').value==='peripheral')issues.push(notice('选择外周静脉：须经实际渗透压与外周耐受性审核；不能由本计算器判定是否可外周输注。',true));
