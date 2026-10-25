@@ -4,17 +4,17 @@ button:disabled{opacity:.5;cursor:not-allowed}.remark-list li.concentration-aler
 <section id="tpn"><div class="card"><div class="top"><h2>① 灰色区域｜依次输入目标</h2><span class="pill">编辑区</span></div><div class="grid">
 <div class="input"><label for="w">体重（kg）</label><input id="w" type="number" step="0.01" value="" placeholder="请输入"></div>
 <div class="input"><label for="fluid">总液量（mL/kg/d）</label><input id="fluid" type="number" step="1" value="" placeholder="请输入"></div>
-<div class="input"><label for="milk">长嘱液体、奶量（mL/d）</label><input id="milk" type="number" step="0.1" value="" placeholder="请输入"></div>
+<div class="input"><label for="milk">长嘱液体、奶量（mL/d）</label><input id="milk" type="number" step="0.1" value="" placeholder="请输入"><label for="saline" style="margin-top:10px">其中0.9%氯化钠实际输入量（mL/24h）</label><input id="saline" type="number" min="0" step="0.1" value="" placeholder="无则填0" aria-describedby="saline-help"><p class="help" id="saline-help">填24小时实际输注的盐水量，已包含在上方总量中，不重复扣体积。部分输注按实际所含盐水量计；不计弃液，可计入上方已包含的盐水冲管量。</p></div>
 <div class="input"><label for="gir">糖速 GIR（mg/kg/min）</label><input id="gir" type="number" step="0.1" value="" placeholder="请输入"></div>
 <div class="input"><label for="aa">氨基酸（g/kg/d）</label><input id="aa" type="number" step="0.1" value="" placeholder="请输入"></div>
 <div class="input"><label for="fat">脂肪（g/kg/d）</label><input id="fat" type="number" step="0.1" value="" placeholder="请输入"></div>
-<div class="input"><label for="na">总钠量（mmol/kg/d）</label><input id="na" type="number" step="0.1" value="" placeholder="请输入"></div>
+<div class="input"><label for="na">目标钠量（mmol/kg/d）</label><input id="na" type="number" step="0.1" value="" placeholder="请输入"></div>
 <div class="input"><label for="k">钾（mmol/kg/d）</label><input id="k" type="number" step="0.1" value="" placeholder="请输入"></div>
 <div class="input"><label for="ca">钙（mmol/kg/d）</label><input id="ca" type="number" step="0.1" value="" placeholder="请输入"></div>
 <div class="input"><label for="p">甘油磷酸钠（mmol P/kg/d）</label><input id="p" type="number" step="0.1" value="" placeholder="请输入"></div>
 <div class="input"><label for="misc">小儿多维及其他（mL/24h）</label><input id="misc" type="number" step="0.05" value="" placeholder="请输入"></div>
 <div class="input"><label for="other">额外静脉液量（mL/d）</label><input id="other" type="number" step="0.1" value="" placeholder="请输入"></div></div>
-<div class="input"><label for="access">TPN输注通路</label><select id="access"><option value="central" selected>中心静脉</option><option value="peripheral">外周静脉</option></select></div><p class="help">科室浓度提示规则：外周静脉葡萄糖＜12.5%、氨基酸＜2%；中心静脉葡萄糖＜25%、氨基酸＜3%。均按混合液终浓度判断，达到限值也提示；浓度低于限值不代表处方或通路已通过审核。</p><details><summary>制剂规格与配液设置（可核对修改）</summary><div class="grid">
+<p class="help">钠目标核算范围：TPN＋上述长嘱盐水。盐水按0.154 mmol Na/mL计，连同甘油磷酸钠带入的钠一起扣减浓钠用量。药物本身、奶液及其他未录入来源的钠未计入，需另行核对。长嘱5%/10%葡萄糖仅扣液体体积，未计入糖速及热卡。</p><div class="input"><label for="access">TPN输注通路</label><select id="access"><option value="central" selected>中心静脉</option><option value="peripheral">外周静脉</option></select></div><p class="help">科室浓度提示规则：外周静脉葡萄糖＜12.5%、氨基酸＜2%；中心静脉葡萄糖＜25%、氨基酸＜3%。均按混合液终浓度判断，达到限值也提示；浓度低于限值不代表处方或通路已通过审核。</p><details><summary>制剂规格与配液设置（可核对修改）</summary><div class="grid">
 <div class="input"><label for="aac">6.74%氨基酸浓度（g/mL）</label><input id="aac" type="number" step="0.0001" value="0.0674"></div>
 <div class="input"><label for="nit">氨基酸含氮量（g/L）</label><input id="nit" type="number" step="0.01" value="9.24"></div>
 <div class="input"><label for="fatc">20%脂肪乳（g/mL）</label><input id="fatc" type="number" step="0.01" value="0.2"></div>
@@ -54,14 +54,19 @@ function checkConcentrations(access,sugarPct,aaPct){
   return {rule,sugarHigh,aaHigh,messages};
 }
 let tpnRX='',tpnText='';
-function tpn(){tpnRX='';tpnText='';['vol','rate','bvol'].forEach(id=>el(id).textContent='—');el('rx').innerHTML='';el('remark').innerHTML='';el('copyrx').disabled=true;let ids=['w','fluid','milk','gir','aa','fat','na','k','ca','p','misc','other','aac','nit','fatc','g10c','g50c','gkcal','fkcal','akcal','nac','kc','cac','pc','pna','reserve'];let x=Object.fromEntries(ids.map(id=>[id,num(id)]));let issues=[];
+function tpn(){tpnRX='';tpnText='';['vol','rate','bvol'].forEach(id=>el(id).textContent='—');el('rx').innerHTML='';el('remark').innerHTML='';el('copyrx').disabled=true;let ids=['w','fluid','milk','saline','gir','aa','fat','na','k','ca','p','misc','other','aac','nit','fatc','g10c','g50c','gkcal','fkcal','akcal','nac','kc','cac','pc','pna','reserve'];let x=Object.fromEntries(ids.map(id=>[id,num(id)]));let issues=[];
 if(Object.values(x).some(y=>!Number.isFinite(y)||y<0)||!['w','aac','nit','fatc','g10c','g50c','nac','kc','cac','pc'].every(i=>x[i]>0)||x.g50c<=x.g10c){el('issues').innerHTML=notice('输入无效：请检查体重、剂量及制剂浓度。',true);return}
-let {w,fluid,milk,gir,aa,fat,na,k,ca,p,misc,other,aac,nit,fatc,g10c,g50c,gkcal,fkcal,akcal,nac,kc,cac,pc,pna,reserve}=x;
+let {w,fluid,milk,saline,gir,aa,fat,na,k,ca,p,misc,other,aac,nit,fatc,g10c,g50c,gkcal,fkcal,akcal,nac,kc,cac,pc,pna,reserve}=x;
+if(saline>milk+1e-9){el('issues').innerHTML=notice('长嘱盐水量不能大于“长嘱液体、奶量”总量；请先将实际输入的盐水计入上方总量。',true);return}
 let total=fluid*w, v=total-milk-other, rate=v/24, factor=reserve/24;
 if(v<=0){el('issues').innerHTML=notice('目标TPN量小于等于0：总液量须大于奶量与其他液量。',true);return}
 let aaV=aa*w/aac, fatV=fat*w/fatc, pV=p*w/pc, caV=ca*w/cac, kV=k*w/kc;
-let pNa=pV*pna;let naTarget=na*w,naV=Math.max(0,(naTarget-pNa)/nac),naDelivered=pNa+naV*nac;
-if(pNa>naTarget+1e-6)issues.push(notice('甘油磷酸钠所带钠量已超过输入的目标总钠量！此时10%氯化钠按0计算，实际钠负荷高于目标。',true));
+// 0.9% NaCl: 154 mmol/L. 盐水已在milk内扣体积，只在这里计钠。
+let pNa=pV*pna, salineNa=saline*0.154, naTarget=na*w;
+let naV=Math.max(0,(naTarget-pNa-salineNa)/nac),tpnNa=pNa+naV*nac,naDelivered=tpnNa+salineNa;
+const sodiumMessages=[];
+if(pNa+salineNa>naTarget+1e-6)sodiumMessages.push(`甘油磷酸钠与长嘱盐水已带入钠 ${fx(pNa+salineNa,3)} mmol/24h，超过目标 ${fx(naTarget,3)} mmol/24h；10%氯化钠按0计算后仍超量 ${fx(pNa+salineNa-naTarget,3)} mmol/24h，请复核钠来源及处方。`);
+issues.push(...sodiumMessages.map(message=>notice(message,true)));
 let otherV=aaV+fatV+pV+caV+kV+naV+misc, glucoseG=gir*w*1440/1000;
 let gsVol=v-otherV,g50=(glucoseG-g10c*gsVol)/(g50c-g10c),g10=gsVol-g50;
 if(gsVol<0)issues.push(notice('非葡萄糖组分体积已超过TPN目标体积，当前液量与营养目标不能同时满足。',true));
@@ -80,16 +85,22 @@ if(el('access').value==='peripheral')issues.push(notice('选择外周静脉：�
 if(!feasible){renderRemarks('remark', [['状态','目标与配液容量约束冲突，请修改灰色参数']]);tpnRX='';tpnText='';el('issues').innerHTML=issues.join('');return}
 const concentration=checkConcentrations(el('access').value,sugarPct,aaPct);
 issues.push(...concentration.messages.map(message=>notice(message,true)));
-if(Math.abs(naDelivered-naTarget)>1e-5)issues.push(notice('实际Na '+fx(naDelivered/w)+' mmol/kg/d，与目标 '+fx(na)+' 不一致。',true));
-let aaN=`${fx(nDay,3)} g/kg/d`, calc=`液速${fx(rate)}mL/h；24h TPN总液量${fx(v,2)}mL（备用${reserve}h配液${fx(v*factor,2)}mL）；糖速${fx(deliveredGIR,2)}mg/kg/min；糖浓度${fx(sugarPct,2)}%；氨基酸${fx(aa,2)}g/kg/d（终浓度${fx(aaPct,2)}%）；脂肪${fx(fat,2)}g/kg/d；Na ${fx(naDelivered/w,2)}、K ${fx(k,2)}、Ca ${fx(ca,2)}、P ${fx(p,2)} mmol/kg/d；总热卡${fx(totalKcal,2)}kcal/kg/d；非蛋白热卡${fx(nonProt,2)}kcal/kg/d；含氮量${aaN}（制剂标注${fx(nit,2)}g/L）；非蛋白热氮比 ${fx(ratio,1)}:1；糖脂热量比 ${Number.isFinite(sugarFat)?fx(sugarFat,2)+':1':'—'}；渗透压${osm}。`;
-let rxtext=assigned.map(z=>z[0]+' '+fx(z[1],2)+'mL（'+reserve+'h备液 '+fx(z[1]*factor,2)+'mL）').join('\n');tpnRX=`TPN绿色医嘱区\n体重${fx(w)}kg；24h目标TPN${fx(v)}mL；泵速${fx(rate)}mL/h\n${rxtext}`;tpnText=calc;tpnRX+=`\n输注通路：${concentration.rule.name}；科室终浓度要求：葡萄糖＜${concentration.rule.glucose}%，氨基酸＜${concentration.rule.aa}%。`;if(concentration.messages.length)tpnRX+='\n【浓度提示】\n'+concentration.messages.join('\n');el('copyrx').disabled=false;
+if(Math.abs(naDelivered-naTarget)>1e-5)issues.push(notice('TPN＋长嘱盐水合计Na '+fx(naDelivered/w)+' mmol/kg/d，与目标 '+fx(na)+' 不一致。',true));
+let aaN=`${fx(nDay,3)} g/kg/d`, calc=`液速${fx(rate)}mL/h；24h TPN总液量${fx(v,2)}mL（备用${reserve}h配液${fx(v*factor,2)}mL）；糖速${fx(deliveredGIR,2)}mg/kg/min；糖浓度${fx(sugarPct,2)}%；氨基酸${fx(aa,2)}g/kg/d（终浓度${fx(aaPct,2)}%）；脂肪${fx(fat,2)}g/kg/d；Na（TPN＋长嘱盐水）${fx(naDelivered/w,2)}、K ${fx(k,2)}、Ca ${fx(ca,2)}、P ${fx(p,2)} mmol/kg/d；总热卡${fx(totalKcal,2)}kcal/kg/d；非蛋白热卡${fx(nonProt,2)}kcal/kg/d；含氮量${aaN}（制剂标注${fx(nit,2)}g/L）；非蛋白热氮比 ${fx(ratio,1)}:1；糖脂热量比 ${Number.isFinite(sugarFat)?fx(sugarFat,2)+':1':'—'}；渗透压${osm}。`;
+const sodiumText=`钠核对（24h）：目标 ${fx(naTarget,3)} mmol；甘油磷酸钠带入 ${fx(pNa,3)} mmol；长嘱0.9%氯化钠 ${fx(saline)} mL，带入 ${fx(salineNa,3)} mmol；TPN内钠 ${fx(tpnNa,3)} mmol；TPN＋长嘱盐水合计 ${fx(naDelivered,3)} mmol（${fx(naDelivered/w,3)} mmol/kg/d）。盐水体积已包含在长嘱液体、奶量中，不重复扣除；未计药物本身、奶液等其他来源钠。`;
+let rxtext=assigned.map(z=>z[0]+' '+fx(z[1],2)+'mL（'+reserve+'h备液 '+fx(z[1]*factor,2)+'mL）').join('\n');tpnRX=`TPN绿色医嘱区\n体重${fx(w)}kg；24h目标TPN${fx(v)}mL；泵速${fx(rate)}mL/h\n${rxtext}`;tpnText=calc+'\n'+sodiumText;tpnRX+='\n'+sodiumText;if(sodiumMessages.length){tpnRX+='\n【钠量提示】\n'+sodiumMessages.join('\n');tpnText+='\n'+sodiumMessages.join('\n')}tpnRX+=`\n输注通路：${concentration.rule.name}；科室终浓度要求：葡萄糖＜${concentration.rule.glucose}%，氨基酸＜${concentration.rule.aa}%。`;if(concentration.messages.length)tpnRX+='\n【浓度提示】\n'+concentration.messages.join('\n');el('copyrx').disabled=false;
 renderRemarks('remark',[
 ['液速',`${fx(rate)} mL/h`],['TPN实际24小时液量',`${fx(v)} mL`],['配液总量',`${fx(v*factor)} mL（${reserve}小时备液）`],
 ['糖速 GIR',`${fx(deliveredGIR)} mg/(kg·min)`],['混合液糖浓度',`${concentrationText(sugarPct,concentration.rule.glucose)}%`,concentration.sugarHigh],
 ['葡萄糖浓度核对',`${concentration.rule.name}要求＜${concentration.rule.glucose}%；${concentration.sugarHigh?'达到或超过限值，请复核':'低于设定限值'}`,concentration.sugarHigh],
 ['氨基酸',`${fx(aa)} g/kg/d；终浓度 ${concentrationText(aaPct,concentration.rule.aa)}%`,concentration.aaHigh],
 ['氨基酸浓度核对',`${concentration.rule.name}要求＜${concentration.rule.aa}%；${concentration.aaHigh?'达到或超过限值，请复核':'低于设定限值'}`,concentration.aaHigh],['脂肪乳',`${fx(fat)} g/kg/d`],
-['钠 Na',`${fx(naDelivered/w)} mmol/kg/d`],['钾 K',`${fx(k)} mmol/kg/d`],['钙 Ca',`${fx(ca)} mmol/kg/d`],['磷 P',`${fx(p)} mmol/kg/d`],
+['目标钠量（TPN＋长嘱盐水）',`${fx(naTarget,3)} mmol/24h（${fx(na,3)} mmol/kg/d）`],
+['甘油磷酸钠带入的钠',`${fx(pNa,3)} mmol/24h`],
+['长嘱0.9%氯化钠带入的钠',`${fx(saline)} mL/24h → ${fx(salineNa,3)} mmol/24h（${fx(salineNa/w,3)} mmol/kg/d）`],
+['TPN内钠',`${fx(tpnNa,3)} mmol/24h（${fx(tpnNa/w,3)} mmol/kg/d）`],
+['钠合计（TPN＋长嘱盐水）',`${fx(naDelivered,3)} mmol/24h（${fx(naDelivered/w,3)} mmol/kg/d）`,sodiumMessages.length>0],
+['钠统计范围','未计药物本身、奶液及其他未录入来源的钠'],['钾 K',`${fx(k)} mmol/kg/d`],['钙 Ca',`${fx(ca)} mmol/kg/d`],['磷 P',`${fx(p)} mmol/kg/d`],
 ['总热卡',`${fx(totalKcal)} kcal/kg/d`],['非蛋白热卡',`${fx(nonProt)} kcal/kg/d`],
 ['氮摄入',`${fx(nDay,3)} g/kg/d（制剂含氮 ${fx(nit)} g/L）`],['非蛋白热氮比',`${fx(ratio,1)} : 1`],
 ['糖脂热量比',Number.isFinite(sugarFat)?`${fx(sugarFat)} : 1`:'—'],['渗透压','未检测/未计算，需另行审核'],['输注通路',el('access').value==='central'?'中心静脉':'外周静脉（需专门评估）']
